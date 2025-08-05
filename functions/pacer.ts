@@ -1,15 +1,27 @@
 import {Handler, HandlerContext} from "@netlify/functions";
 
 const handler: Handler = async (event, context: HandlerContext) => {
-    const input = event.queryStringParameters?.["input"];
-    const km = event.queryStringParameters?.["km"];
-    const time = event.queryStringParameters?.["time"];
+    if (event.httpMethod !== 'POST') {
+        return {
+            statusCode: 405,
+            body: JSON.stringify({error: 'Method Not Allowed'}),
+        };
+    }
+
+    if (!event.body) {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({error: "Missing request body"}),
+        };
+    }
+
+    const {input, km, time} = JSON.parse(event.body);
 
     if (!input || !km || !time) {
         return {
             statusCode: 400,
             body: JSON.stringify({
-                error: "Missing required query parameters: input, km, time",
+                error: "Missing required fields in body: input, km, time",
             }),
         };
     }

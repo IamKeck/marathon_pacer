@@ -18,9 +18,36 @@ describe('pacer handler', () => {
     callbackWaitsForEmptyEventLoop: false,
   };
 
-  it('should return a 400 error if input is missing', async () => {
+  it('should return a 405 error if method is not POST', async () => {
     const event: HandlerEvent = {
-      queryStringParameters: { km: '42.195', time: '4_0_0' },
+      httpMethod: 'GET',
+    } as any;
+    const response = (await handler(
+      event,
+      mockContext,
+      () => {}
+    )) as HandlerResponse;
+    expect(response.statusCode).toBe(405);
+    expect(JSON.parse(response.body ?? "")).toEqual({ error: 'Method Not Allowed' });
+  });
+
+  it('should return a 400 error if body is missing', async () => {
+    const event: HandlerEvent = {
+      httpMethod: 'POST',
+    } as any;
+    const response = (await handler(
+      event,
+      mockContext,
+      () => {}
+    )) as HandlerResponse;
+    expect(response.statusCode).toBe(400);
+    expect(JSON.parse(response.body ?? "")).toEqual({ error: 'Missing request body' });
+  });
+
+  it('should return a 400 error if required fields are missing', async () => {
+    const event: HandlerEvent = {
+      httpMethod: 'POST',
+      body: JSON.stringify({ km: '42.195', time: '4_0_0' }),
     } as any;
     const response = (await handler(
       event,
@@ -29,13 +56,14 @@ describe('pacer handler', () => {
     )) as HandlerResponse;
     expect(response.statusCode).toBe(400);
     expect(JSON.parse(response.body ?? "")).toEqual({
-      error: 'Missing required query parameters: input, km, time',
+      error: 'Missing required fields in body: input, km, time',
     });
   });
 
   it('should return a 400 error for invalid input format', async () => {
     const event: HandlerEvent = {
-      queryStringParameters: { input: 'invalid', km: '42.195', time: '4_0_0' },
+      httpMethod: 'POST',
+      body: JSON.stringify({ input: 'invalid', km: '42.195', time: '4_0_0' }),
     } as any;
     const response = (await handler(
       event,
@@ -48,11 +76,12 @@ describe('pacer handler', () => {
 
   it('should calculate the time difference correctly (貯金)', async () => {
     const event: HandlerEvent = {
-      queryStringParameters: {
+      httpMethod: 'POST',
+      body: JSON.stringify({
         input: '5キロで25分10秒',
         km: '42.195',
         time: '4_0_0',
-      },
+      }),
     } as any;
     const response = (await handler(
       event,
@@ -67,11 +96,12 @@ describe('pacer handler', () => {
 
   it('should calculate the time difference correctly (借金)', async () => {
     const event: HandlerEvent = {
-      queryStringParameters: {
+      httpMethod: 'POST',
+      body: JSON.stringify({
         input: '5キロで29分0秒',
         km: '42.195',
         time: '4_0_0',
-      },
+      }),
     } as any;
     const response = (await handler(
       event,
@@ -85,11 +115,12 @@ describe('pacer handler', () => {
   });
   it('should calculate the time difference correctly (借金, no seconds)', async () => {
     const event: HandlerEvent = {
-      queryStringParameters: {
+      httpMethod: 'POST',
+      body: JSON.stringify({
         input: '5キロで29分',
         km: '42.195',
         time: '4_0_0',
-      },
+      }),
     } as any;
     const response = (await handler(
       event,
