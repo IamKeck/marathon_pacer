@@ -1,3 +1,4 @@
+import { describe, it, expect } from "@jest/globals";
 import { handler } from '../pacer';
 import { HandlerEvent, HandlerContext, HandlerResponse } from '@netlify/functions';
 
@@ -10,8 +11,6 @@ describe('pacer handler', () => {
     awsRequestId: '',
     logGroupName: '',
     logStreamName: '',
-    identity: undefined,
-    clientContext: undefined,
     getRemainingTimeInMillis: () => 0,
     done: () => {},
     fail: () => {},
@@ -29,7 +28,7 @@ describe('pacer handler', () => {
       () => {}
     )) as HandlerResponse;
     expect(response.statusCode).toBe(400);
-    expect(JSON.parse(response.body)).toEqual({
+    expect(JSON.parse(response.body ?? "")).toEqual({
       error: 'Missing required query parameters: input, km, time',
     });
   });
@@ -44,7 +43,7 @@ describe('pacer handler', () => {
       () => {}
     )) as HandlerResponse;
     expect(response.statusCode).toBe(400);
-    expect(JSON.parse(response.body)).toEqual({ error: 'Invalid input format' });
+    expect(JSON.parse(response.body ?? "")).toEqual({ error: 'Invalid input format' });
   });
 
   it('should calculate the time difference correctly (貯金)', async () => {
@@ -61,7 +60,7 @@ describe('pacer handler', () => {
       () => {}
     )) as HandlerResponse;
     expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(response.body ?? "");
     expect(body.status).toBe('success');
     expect(body.message).toBe('5キロで25分10秒は、目標より3分16秒の貯金があります');
   });
@@ -80,7 +79,7 @@ describe('pacer handler', () => {
       () => {}
     )) as HandlerResponse;
     expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(response.body ?? "");
     expect(body.status).toBe('success');
     expect(body.message).toBe('5キロで29分0秒は、目標より34秒の借金があります');
   });
@@ -98,7 +97,7 @@ describe('pacer handler', () => {
       () => {}
     )) as HandlerResponse;
     expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body);
+    const body = JSON.parse(response.body ?? "");
     expect(body.status).toBe('success');
     expect(body.message).toBe('5キロで29分は、目標より34秒の借金があります');
   });
